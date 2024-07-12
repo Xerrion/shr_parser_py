@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 use std::path::PathBuf;
-use shr_parser::{SHRParser, SHRParsingType};
+use ::shr_parser::{SHRParser, SHRParsingType};
 
 /// A wrapper around the SHRParser for Python
 #[pyclass]
