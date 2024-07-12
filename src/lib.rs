@@ -54,8 +54,8 @@ fn create_parser(file_path: String, parsing_type: i32) -> PyResult<PySHRParser> 
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn shr_parser_py(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<PySHRParser>()?;
-    m.add_function(wrap_pyfunction!(create_parser, m)?)?;
+ fn my_module(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PySHRParser>()?;
+    module.add_function(wrap_pyfunction!(create_parser, module)?)?;
     Ok(())
 }

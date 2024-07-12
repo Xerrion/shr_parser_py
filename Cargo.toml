@@ -6,7 +6,7 @@ edition = "2021"
 license = "GPL-3.0-only"
 authors = ["Lasse Nielsen <lasse@xerrion.dk>"]
 readme = "README.md"
-documentation = "https://docs.rs/shr_parser"
+documentation = "https://docs.rs/shr_parser_py"
 repository = "https://github.com/Xerrion/shr_parser_py"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -15,5 +15,5 @@ crate-type = ["cdylib"]
 name = "shr_parser"
 
 [dependencies]
-pyo3 = "0.22.1"
+pyo3 = { version = "0.22.1", features = ["extension-module"] }
 shr_parser = "1.0.5"
