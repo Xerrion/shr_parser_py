@@ -1,4 +1,4 @@
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/xerrion/shr_parser_py/CI.yml) ![GitHub License](https://img.shields.io/github/license/xerrion/shr_parser_py) ![Crates.io Version](https://img.shields.io/crates/v/shr_parser_py)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/xerrion/shr_parser_py/CI.yml) ![GitHub License](https://img.shields.io/github/license/xerrion/shr_parser_py) ![Crates.io Version](https://img.shields.io/crates/v/shr_parser_py?link=https%3A%2F%2Fcrates.io%2Fcrates%2Fshr_parser_py)
 
 # SHR Parser Python Bindings
 
