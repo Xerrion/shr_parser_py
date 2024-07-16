@@ -1,3 +1,5 @@
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/xerrion/shr_parser_py/CI.yml) ![GitHub License](https://img.shields.io/github/license/xerrion/shr_parser_py) ![Crates.io Version](https://img.shields.io/crates/v/shr_parser_py)
+
 # SHR Parser Python Bindings
 
 This project provides Python bindings for the Rust-based `shr_parser` library, which is designed to parse and handle SHR files. The SHR file format includes a file header and multiple sweeps, each with its own header and data. This library uses memory mapping for efficient file reading and Rayon for parallel processing of sweeps.
