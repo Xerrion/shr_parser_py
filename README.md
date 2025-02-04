@@ -65,14 +65,14 @@ A class representing a parser for SHR files.
 Here is an example usage of the SHRParser class:
 
 ```python
-import shr_parser
+from shr_parser import SHRParser, SHRParsingType
 
 # Define the file path and parsing type
 file_path = "path/to/your/shrfile.shr"
-parsing_type = 0  # SHRParsingType::Peak
+parsing_type = SHRParsingType.PEAK
 
 # Create a parser instance
-parser = shr_parser.SHRParser(file_path, parsing_type)
+parser = SHRParser(file_path, parsing_type)
 
 # Get file path
 print(parser.get_file_path())

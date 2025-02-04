@@ -132,11 +132,8 @@ impl PySHRParser {
 
 /// Create a new SHRParser instance.
 #[pyfunction]
-fn create_parser(file_path: &str, parsing_type: i32) -> PyResult<PySHRParser> {
-    let py_parsing_type: PySHRParsingType = parsing_type
-        .try_into()
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
-    PySHRParser::new(file_path, py_parsing_type)
+fn create_parser(file_path: &str, parsing_type: PySHRParsingType) -> PyResult<PySHRParser> {
+    PySHRParser::new(file_path, parsing_type)
 }
 
 /// A Python module implemented in Rust.
