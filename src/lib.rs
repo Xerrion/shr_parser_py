@@ -1,26 +1,11 @@
-use fmt::Display;
-use std::fmt;
+use std::fmt::{self, Display};
+use std::path::PathBuf;
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
-use std::path::PathBuf;
-use ::shr_parser::{SHRParser, SHRParsingType};
+use shr_parser::{SHRParser, SHRParsingType};
 
-/// A wrapper around the SHRParser for Python
-#[pyclass(name="SHRParser", subclass)]
-struct PySHRParser {
-    parser: SHRParser,
-    parsing_type: PySHRParsingType,
-}
-
-#[pyclass(name="SHRSweep")]
-struct PySHRSweep {
-    sweep_number: i32,
-    timestamp: u64,
-    frequency: f64,
-    amplitude: f64,
-}
-
-#[pyclass(name="SHRParsingType", eq, eq_int)]
+/// An enum mirroring SHRParsingType for Python.
+#[pyclass(name = "SHRParsingType", eq, eq_int)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum PySHRParsingType {
     PEAK = 0,
@@ -30,7 +15,6 @@ enum PySHRParsingType {
 
 impl TryFrom<i32> for PySHRParsingType {
     type Error = &'static str;
-
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(PySHRParsingType::PEAK),
@@ -43,12 +27,11 @@ impl TryFrom<i32> for PySHRParsingType {
 
 impl TryFrom<PySHRParsingType> for SHRParsingType {
     type Error = &'static str;
-
     fn try_from(value: PySHRParsingType) -> Result<Self, Self::Error> {
         match value {
             PySHRParsingType::PEAK => Ok(SHRParsingType::Peak),
             PySHRParsingType::MEAN => Ok(SHRParsingType::Mean),
-            PySHRParsingType::LOW => Ok(SHRParsingType::Low),
+            PySHRParsingType::LOW  => Ok(SHRParsingType::Low),
         }
     }
 }
@@ -58,9 +41,26 @@ impl Display for PySHRParsingType {
         match self {
             PySHRParsingType::PEAK => write!(f, "SHRParsingType.PEAK"),
             PySHRParsingType::MEAN => write!(f, "SHRParsingType.MEAN"),
-            PySHRParsingType::LOW => write!(f, "SHRParsingType.LOW"),
+            PySHRParsingType::LOW  => write!(f, "SHRParsingType.LOW"),
         }
     }
+}
+
+/// A Python wrapper for a sweep.
+#[pyclass(name = "SHRSweep")]
+struct PySHRSweep {
+    #[pyo3(get)]
+    sweep_number: i32,
+    #[pyo3(get)]
+    timestamp: u64,
+    #[pyo3(get)]
+    frequency: f64,
+    #[pyo3(get)]
+    amplitude: f64,
+    #[pyo3(get)]
+    latitude: f64,
+    #[pyo3(get)]
+    longitude: f64,
 }
 
 #[pymethods]
@@ -71,46 +71,38 @@ impl PySHRSweep {
             self.sweep_number, self.timestamp, self.frequency, self.amplitude
         )
     }
+}
 
-    #[getter]
-    fn sweep_number(&self) -> i32 {
-        self.sweep_number
-    }
-
-    #[getter]
-    fn timestamp(&self) -> u64 {
-        self.timestamp
-    }
-
-    #[getter]
-    fn frequency(&self) -> f64 {
-        self.frequency
-    }
-
-    #[getter]
-    fn amplitude(&self) -> f64 {
-        self.amplitude
-    }
+/// A Python wrapper around SHRParser.
+#[pyclass(name = "SHRParser", subclass)]
+struct PySHRParser {
+    parser: SHRParser,
+    parsing_type: PySHRParsingType,
 }
 
 #[pymethods]
 impl PySHRParser {
     #[new]
     fn new(file_path: &str, parsing_type: PySHRParsingType) -> PyResult<Self> {
-        let parser = SHRParser::new(PathBuf::from(file_path), SHRParsingType::try_from(parsing_type).unwrap()).map_err(|e| {
-            pyo3::exceptions::PyIOError::new_err(format!("Failed to parse SHR file: {:?}", e))
-        })?;
+        let shr_parsing = SHRParsingType::try_from(parsing_type)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
+        let parser = SHRParser::new(PathBuf::from(file_path), shr_parsing)
+            .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Failed to parse SHR file: {:?}", e)))?;
         Ok(PySHRParser { parser, parsing_type })
     }
 
     fn __repr__(&self) -> String {
-        format!("SHRParser(file_path='{}', parsing_type={})", self.parser.get_file_path().to_string_lossy(), self.parsing_type)
+        format!(
+            "SHRParser(file_path='{}', parsing_type={})",
+            self.parser.get_file_path().to_string_lossy(),
+            self.parsing_type
+        )
     }
 
     fn to_csv(&self, path: String) -> PyResult<()> {
-        self.parser.to_csv(PathBuf::from(path)).map_err(|e| {
-            pyo3::exceptions::PyIOError::new_err(format!("Failed to write to CSV: {:?}", e))
-        })
+        self.parser
+            .to_csv(PathBuf::from(path))
+            .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Failed to write to CSV: {:?}", e)))
     }
 
     fn get_sweeps(&self) -> PyResult<Vec<PySHRSweep>> {
@@ -118,10 +110,12 @@ impl PySHRParser {
         Ok(sweeps
             .into_iter()
             .map(|sweep| PySHRSweep {
-                sweep_number: sweep.sweep_number,
-                timestamp: sweep.timestamp,
+                sweep_number: sweep.number,
+                timestamp: sweep.header.timestamp,
                 frequency: sweep.frequency,
                 amplitude: sweep.amplitude,
+                latitude: sweep.header.latitude,
+                longitude: sweep.header.longitude,
             })
             .collect())
     }
@@ -132,23 +126,25 @@ impl PySHRParser {
     }
 
     fn get_file_path(&self) -> PyResult<String> {
-        Ok(self.parser.get_file_path().to_string_lossy().to_string())
+        Ok(self.parser.get_file_path().to_string_lossy().into_owned())
     }
 }
-
 
 /// Create a new SHRParser instance.
 #[pyfunction]
 fn create_parser(file_path: &str, parsing_type: i32) -> PyResult<PySHRParser> {
-    PySHRParser::new(file_path, parsing_type.try_into().unwrap())
+    let py_parsing_type: PySHRParsingType = parsing_type
+        .try_into()
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
+    PySHRParser::new(file_path, py_parsing_type)
 }
 
 /// A Python module implemented in Rust.
-#[pymodule]
- fn shr_parser(module: &Bound<'_, PyModule>) -> PyResult<()> {
-    module.add_class::<PySHRParser>()?;
-    module.add_class::<PySHRSweep>()?;
-    module.add_class::<PySHRParsingType>()?;
-    module.add_function(wrap_pyfunction!(create_parser, module)?)?;
+#[pymodule(name="shr_parser")]
+fn shr_parser_py(m: &Bound<PyModule>) -> PyResult<()> {
+    m.add_class::<PySHRParser>()?;
+    m.add_class::<PySHRSweep>()?;
+    m.add_class::<PySHRParsingType>()?;
+    m.add_function(wrap_pyfunction!(create_parser, m)?)?;
     Ok(())
 }
