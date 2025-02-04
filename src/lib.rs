@@ -67,8 +67,8 @@ struct PySHRSweep {
 impl PySHRSweep {
     fn __repr__(&self) -> String {
         format!(
-            "SHRSweep(sweep_number={}, timestamp={}, frequency={}, amplitude={})",
-            self.sweep_number, self.timestamp, self.frequency, self.amplitude
+            "SHRSweep(sweep_number={}, timestamp={}, frequency={}, amplitude={}, Latitude={}, Longitude={})",
+            self.sweep_number, self.timestamp, self.frequency, self.amplitude, self.latitude, self.longitude
         )
     }
 }
