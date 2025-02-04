@@ -1,8 +1,8 @@
-use std::fmt::{self, Display};
-use std::path::PathBuf;
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 use shr_parser::{SHRParser, SHRParsingType};
+use std::fmt::{self, Display};
+use std::path::PathBuf;
 
 /// An enum mirroring SHRParsingType for Python.
 #[pyclass(name = "SHRParsingType", eq, eq_int)]
@@ -31,7 +31,7 @@ impl TryFrom<PySHRParsingType> for SHRParsingType {
         match value {
             PySHRParsingType::PEAK => Ok(SHRParsingType::Peak),
             PySHRParsingType::MEAN => Ok(SHRParsingType::Mean),
-            PySHRParsingType::LOW  => Ok(SHRParsingType::Low),
+            PySHRParsingType::LOW => Ok(SHRParsingType::Low),
         }
     }
 }
@@ -41,7 +41,7 @@ impl Display for PySHRParsingType {
         match self {
             PySHRParsingType::PEAK => write!(f, "SHRParsingType.PEAK"),
             PySHRParsingType::MEAN => write!(f, "SHRParsingType.MEAN"),
-            PySHRParsingType::LOW  => write!(f, "SHRParsingType.LOW"),
+            PySHRParsingType::LOW => write!(f, "SHRParsingType.LOW"),
         }
     }
 }
@@ -86,9 +86,13 @@ impl PySHRParser {
     fn new(file_path: &str, parsing_type: PySHRParsingType) -> PyResult<Self> {
         let shr_parsing = SHRParsingType::try_from(parsing_type)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
-        let parser = SHRParser::new(PathBuf::from(file_path), shr_parsing)
-            .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Failed to parse SHR file: {:?}", e)))?;
-        Ok(PySHRParser { parser, parsing_type })
+        let parser = SHRParser::new(PathBuf::from(file_path), shr_parsing).map_err(|e| {
+            pyo3::exceptions::PyIOError::new_err(format!("Failed to parse SHR file: {:?}", e))
+        })?;
+        Ok(PySHRParser {
+            parser,
+            parsing_type,
+        })
     }
 
     fn __repr__(&self) -> String {
@@ -100,9 +104,9 @@ impl PySHRParser {
     }
 
     fn to_csv(&self, path: String) -> PyResult<()> {
-        self.parser
-            .to_csv(PathBuf::from(path))
-            .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Failed to write to CSV: {:?}", e)))
+        self.parser.to_csv(PathBuf::from(path)).map_err(|e| {
+            pyo3::exceptions::PyIOError::new_err(format!("Failed to write to CSV: {:?}", e))
+        })
     }
 
     fn get_sweeps(&self) -> PyResult<Vec<PySHRSweep>> {
@@ -137,7 +141,7 @@ fn create_parser(file_path: &str, parsing_type: PySHRParsingType) -> PyResult<Py
 }
 
 /// A Python module implemented in Rust.
-#[pymodule(name="shr_parser")]
+#[pymodule(name = "shr_parser")]
 fn shr_parser_py(m: &Bound<PyModule>) -> PyResult<()> {
     m.add_class::<PySHRParser>()?;
     m.add_class::<PySHRSweep>()?;
