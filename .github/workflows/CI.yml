@@ -54,7 +54,8 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --manifest-path shr_parser_py/Cargo.toml --release --out dist
             --find-interpreter
-          sccache: 'true'
+          # The Actions cache egress limit breaks this cross-compilation matrix.
+          sccache: 'false'
           manylinux: auto
       - name: Test Python bindings
         if: matrix.platform.target == 'x86_64'
