@@ -1,12 +1,34 @@
 import gc
-from pathlib import Path
 import struct
 import unittest
+import weakref
+from pathlib import Path
 
 import shr_parser
 
 
 class SweepDataTests(unittest.TestCase):
+    def test_cached_sweeps_do_not_keep_parser_subclass_alive(self):
+        class CachedParser(shr_parser.SHRParser):
+            pass
+
+        fixture = (
+            Path(__file__).resolve().parents[2]
+            / "shr_parser"
+            / "tests"
+            / "example_file"
+            / "sweep.shr"
+        )
+        parser = CachedParser(str(fixture), shr_parser.SHRParsingType.PEAK)
+        parser.sweeps = parser.get_sweeps()
+        self.assertGreater(len(parser.sweeps), 0)
+        parser_ref = weakref.ref(parser)
+
+        del parser
+        gc.collect()
+
+        self.assertIsNone(parser_ref())
+
     def test_get_data_preserves_every_bin_and_parser_lifetime(self):
         fixture = (
             Path(__file__).resolve().parents[2]
@@ -48,7 +70,9 @@ class SweepDataTests(unittest.TestCase):
                 offset = amplitudes_offset + bin_index * 4
                 expected_amplitude = struct.unpack_from("<f", contents, offset)[0]
                 self.assertEqual(amplitude, expected_amplitude)
-                self.assertEqual(struct.pack("<f", amplitude), contents[offset : offset + 4])
+                self.assertEqual(
+                    struct.pack("<f", amplitude), contents[offset : offset + 4]
+                )
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+use pyo3::class::gc::{PyTraverseError, PyVisit};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use shr_parser::SHRSweep;
@@ -40,6 +41,10 @@ impl PySHRSweep {
 
 #[pymethods]
 impl PySHRSweep {
+    fn __traverse__(&self, visit: PyVisit<'_>) -> Result<(), PyTraverseError> {
+        visit.call(&self.parser)
+    }
+
     /// Return every bin as a (frequency in Hz, unmodified amplitude) tuple.
     fn get_data<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         let parser = self.parser.borrow(py);
