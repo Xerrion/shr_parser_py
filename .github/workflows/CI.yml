@@ -38,6 +38,13 @@ jobs:
             target: ppc64le
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: shr_parser_py
+      - uses: actions/checkout@v4
+        with:
+          repository: Xerrion/shr_parser
+          ref: 3e113c1d155da5bb14fa7da36244237e9faba3c6
+          path: shr_parser
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
@@ -45,9 +52,15 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter
+          args: --manifest-path shr_parser_py/Cargo.toml --release --out dist
+            --find-interpreter
           sccache: 'true'
           manylinux: auto
+      - name: Test Python bindings
+        if: matrix.platform.target == 'x86_64'
+        run: |
+          python -m pip install --no-index --find-links dist shr_parser
+          python -m unittest discover -s shr_parser_py/tests -v
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -69,6 +82,13 @@ jobs:
             target: armv7
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: shr_parser_py
+      - uses: actions/checkout@v4
+        with:
+          repository: Xerrion/shr_parser
+          ref: 3e113c1d155da5bb14fa7da36244237e9faba3c6
+          path: shr_parser
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
@@ -76,7 +96,8 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter
+          args: --manifest-path shr_parser_py/Cargo.toml --release --out dist
+            --find-interpreter
           sccache: 'true'
           manylinux: musllinux_1_2
       - name: Upload wheels
@@ -96,6 +117,13 @@ jobs:
             target: x86
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: shr_parser_py
+      - uses: actions/checkout@v4
+        with:
+          repository: Xerrion/shr_parser
+          ref: 3e113c1d155da5bb14fa7da36244237e9faba3c6
+          path: shr_parser
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
@@ -104,7 +132,8 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter
+          args: --manifest-path shr_parser_py/Cargo.toml --release --out dist
+            --find-interpreter
           sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -123,6 +152,13 @@ jobs:
             target: aarch64
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: shr_parser_py
+      - uses: actions/checkout@v4
+        with:
+          repository: Xerrion/shr_parser
+          ref: 3e113c1d155da5bb14fa7da36244237e9faba3c6
+          path: shr_parser
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
@@ -130,7 +166,8 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --find-interpreter
+          args: --manifest-path shr_parser_py/Cargo.toml --release --out dist
+            --find-interpreter
           sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -142,11 +179,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: shr_parser_py
+      - uses: actions/checkout@v4
+        with:
+          repository: Xerrion/shr_parser
+          ref: 3e113c1d155da5bb14fa7da36244237e9faba3c6
+          path: shr_parser
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
-          args: --out dist
+          args: --manifest-path shr_parser_py/Cargo.toml --out dist
       - name: Upload sdist
         uses: actions/upload-artifact@v4
         with:
@@ -156,7 +200,8 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name ==
+      'workflow_dispatch' }}
     needs: [linux, musllinux, windows, macos, sdist]
     permissions:
       # Use to sign the release artifacts
